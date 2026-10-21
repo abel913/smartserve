@@ -1,0 +1,15 @@
+{
+  "name": "@smartserve/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.jsonc",
+    "build": "wrangler deploy --config wrangler.jsonc --dry-run --outdir dist",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@smartserve/shared": "0.1.0",
+    "hono": "^4.9.8"
+  }
+}
