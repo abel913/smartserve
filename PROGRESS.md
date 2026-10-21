@@ -6,7 +6,7 @@ Status: **In progress**
 
 ### Tasks
 
-- [x] Inspect repository and preserve existing resources (repository was empty).
+- [x] Inspect repository and preserve existing resources (active remote contained its original README; its description is preserved).
 - [x] Establish `apps/web`, `apps/api`, `packages/shared`, and `supabase`.
 - [x] Configure React, Vite, Tailwind CSS, TanStack Query, Hono, and shared TypeScript types.
 - [x] Create responsive SmartServe welcome page.

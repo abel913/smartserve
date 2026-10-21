@@ -1,6 +1,8 @@
-# SmartServe
+# smartserve
 
-SmartServe is an AI-powered, Amharic-enabled smart menu and hotel dining platform. Phase 1 establishes the React guest experience, Hono API, shared types, and local tooling.
+AI-powered, Amharic-enabled smart menu and hotel dining platform built with React, Hono, Supabase, and Cloudflare.
+
+Phase 1 establishes the React guest experience, Hono API, shared types, and local tooling.
 
 ## Requirements
 
