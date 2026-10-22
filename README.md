@@ -50,10 +50,24 @@ Keep real secrets in local ignored environment files or Cloudflare Worker secret
 
 ## Deployment
 
-Authenticate Wrangler with a Cloudflare account using `npx wrangler login`. Deploy the API with `npm run deploy:api`; this publishes the Worker to its `workers.dev` URL. Deploy the web app with `npm run deploy:web` after creating a Cloudflare Pages project named `smartserve` in your Cloudflare account; Pages serves the Vite build from `apps/web/dist`.
+The frontend is a static Cloudflare Pages site. The API is a Cloudflare Worker with a `workers.dev` URL. Cloudflare makes its Workers Free plan available by default; the Workers Paid plan starts at $5 per month. This project does not configure paid add-ons. See Cloudflare's [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [Pages limits](https://developers.cloudflare.com/pages/platform/limits/).
 
-Set frontend variables in the Pages project settings before enabling Supabase features. Configure server-only values with `npx wrangler secret put NAME --config apps/api/wrangler.jsonc`. A deployment is complete only after checking the Pages URL and the deployed API's `/health` URL.
+1. Sign in to the intended Cloudflare account and verify its email address. Confirm that the account is using Workers Free before deploying the API.
+2. Authenticate Wrangler with `npx wrangler login`.
+3. Create the Pages project once: `npx wrangler pages project create smartserve --production-branch main --force`.
+4. Deploy the frontend with `npm run deploy:web` and the API with `npm run deploy:api`.
+5. Open the Pages URL and request `/health` on the Worker URL. Treat deployment as complete only after both respond successfully.
+
+Wrangler's newer automatic workspace detection tried to configure this monorepo as a Worker during Pages project creation. The `--force` flag on the project creation command selects the direct Pages workflow. The deploy script uploads only `apps/web/dist`.
+
+Set frontend variables in the Pages project settings before enabling Supabase features. Configure server-only values with `npx wrangler secret put NAME --config apps/api/wrangler.jsonc`.
+
+### Cloudflare deployment status (October 22, 2026)
+
+Wrangler authentication succeeded, but Cloudflare rejected both project creation and Worker deployment because the account email is not verified. No Pages project or API Worker was created, so there are no live URLs to verify. The account currently reports `default_usage_model: standard`; Cloudflare describes Standard as the usage model for Workers Paid accounts. I did not change billing or deploy the API under that setting. Use a Workers Free account before retrying the API deployment. Wrangler reports the account's `workers.dev` subdomain as `smartserve`.
+
+To unblock deployment, verify the Cloudflare account email from **Cloudflare Dashboard → Profile → Email Address** (select **Send verification email** if shown, then follow the link in the email). Confirm the Workers Free plan in the dashboard, then retry the steps above. Cloudflare's [email verification instructions](https://developers.cloudflare.com/fundamentals/user-profiles/verify-email-address/) explain how to resend the message if needed.
 
 ## Supabase
 
-The `supabase/` directory is reserved for local configuration and migrations. Phase 1 creates no application tables. Confirm and link the intended development project before later schema work.
+The `supabase/` directory is reserved for local configuration and migrations. Phase 1 creates no application tables. Supabase access was verified for `smartserve-dev` (project ref `pvtvhqvvyhumydqsvqtq`, region `eu-central-1`, status `ACTIVE_HEALTHY`). No Supabase schema changes were made. `airline-exam-bot-staging` was not modified.
