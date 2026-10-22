@@ -64,9 +64,13 @@ Set frontend variables in the Pages project settings before enabling Supabase fe
 
 ### Cloudflare deployment status (October 22, 2026)
 
-Wrangler authentication succeeded, but Cloudflare rejected both project creation and Worker deployment because the account email is not verified. No Pages project or API Worker was created, so there are no live URLs to verify. The account currently reports `default_usage_model: standard`; Cloudflare describes Standard as the usage model for Workers Paid accounts. I did not change billing or deploy the API under that setting. Use a Workers Free account before retrying the API deployment. Wrangler reports the account's `workers.dev` subdomain as `smartserve`.
+The static frontend is deployed at [https://smartserve.pages.dev/](https://smartserve.pages.dev/) and returned HTTP 200 when checked. The latest production deployment URL was `https://77ea50f9.smartserve.pages.dev`.
 
-To unblock deployment, verify the Cloudflare account email from **Cloudflare Dashboard → Profile → Email Address** (select **Send verification email** if shown, then follow the link in the email). Confirm the Workers Free plan in the dashboard, then retry the steps above. Cloudflare's [email verification instructions](https://developers.cloudflare.com/fundamentals/user-profiles/verify-email-address/) explain how to resend the message if needed.
+The API is not deployed. The expected health URL, `https://smartserve-api.smartserve.workers.dev/health`, returned HTTP 404 because no Worker exists. Cloudflare account settings report `default_usage_model: standard` and `green_compute: false`; Cloudflare documents Standard as the usage model for Workers Paid accounts. The subscription API returned HTTP 403 because the current Wrangler token lacks billing read access, so the account's subscribed plan and usage totals could not be independently read. No paid plan, add-on, or billing setting was changed. Do not deploy the API until Workers Free eligibility is confirmed (or a confirmed Workers Free account is used).
+
+Pages project creation now succeeds. Cloudflare's user API does not expose an `email_verified` field; the Pages creation success shows the earlier verification gate no longer blocks Pages. The profile page is the authoritative way to check the verification badge. See Cloudflare's [email verification instructions](https://developers.cloudflare.com/fundamentals/user-profiles/verify-email-address/).
+
+The Pages project has no production or preview environment variables or secrets configured. The current welcome page does not use `VITE_API_URL` or call the API, so it has no production API URL or CORS dependency yet. No Worker exists, so no production Worker secrets can be inspected.
 
 ## Supabase
 
