@@ -66,11 +66,13 @@ Set frontend variables in the Pages project settings before enabling Supabase fe
 
 The static frontend is deployed at [https://smartserve.pages.dev/](https://smartserve.pages.dev/) and returned HTTP 200 when checked. The latest production deployment URL was `https://77ea50f9.smartserve.pages.dev`.
 
-The API is not deployed. The expected health URL, `https://smartserve-api.smartserve.workers.dev/health`, returned HTTP 404 because no Worker exists. Cloudflare account settings report `default_usage_model: standard` and `green_compute: false`; Cloudflare documents Standard as the usage model for Workers Paid accounts. The subscription API returned HTTP 403 because the current Wrangler token lacks billing read access, so the account's subscribed plan and usage totals could not be independently read. No paid plan, add-on, or billing setting was changed. Do not deploy the API until Workers Free eligibility is confirmed (or a confirmed Workers Free account is used).
+The Hono API is deployed with `apps/api/wrangler.jsonc` at [https://smartserve-api.smartserve.workers.dev/](https://smartserve-api.smartserve.workers.dev/). Its `/health` endpoint returned HTTP 200 with valid JSON (`status: ok`, `service: smartserve-api`, and an ISO timestamp). The account owner confirmed Workers Free before deployment. No plan or billing setting was changed.
+
+The Workers account settings API reports `default_usage_model: standard` and `green_compute: false`; Cloudflare documents Standard as the usage model for Workers Paid accounts. Subscription details could not be read because the Wrangler token lacks billing-read access (HTTP 403). If the Standard setting is unexpected, confirm the account plan in Cloudflare Dashboard → Workers & Pages → Usage/Billing. The API deployment succeeded and both services returned HTTP 200.
 
 Pages project creation now succeeds. Cloudflare's user API does not expose an `email_verified` field; the Pages creation success shows the earlier verification gate no longer blocks Pages. The profile page is the authoritative way to check the verification badge. See Cloudflare's [email verification instructions](https://developers.cloudflare.com/fundamentals/user-profiles/verify-email-address/).
 
-The Pages project has no production or preview environment variables or secrets configured. The current welcome page does not use `VITE_API_URL` or call the API, so it has no production API URL or CORS dependency yet. No Worker exists, so no production Worker secrets can be inspected.
+The Pages project has no production or preview environment variables or secrets configured. The current welcome page does not use `VITE_API_URL` or call the API, so it has no production API URL or CORS dependency yet. `wrangler secret list` returned no Worker secrets.
 
 ## Supabase
 
