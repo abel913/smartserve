@@ -2,7 +2,7 @@
 
 AI-powered, Amharic-enabled smart menu and hotel dining platform built with React, Hono, Supabase, and Cloudflare.
 
-Phase 1 establishes the React guest experience, Hono API, shared types, and local tooling.
+Phase 1 establishes the application foundation. Phase 2 adds the initial hotel-scoped Supabase schema, access policies, and database tests. The current web and API experiences are still the Phase 1 welcome page and health endpoint; guest ordering and staff authentication are later phases.
 
 ## Requirements
 
@@ -74,6 +74,44 @@ Pages project creation now succeeds. Cloudflare's user API does not expose an `e
 
 The Pages project has no production or preview environment variables or secrets configured. The current welcome page does not use `VITE_API_URL` or call the API, so it has no production API URL or CORS dependency yet. `wrangler secret list` returned no Worker secrets.
 
-## Supabase
+## Supabase database
 
-The `supabase/` directory is reserved for local configuration and migrations. Phase 1 creates no application tables. Supabase access was verified for `smartserve-dev` (project ref `pvtvhqvvyhumydqsvqtq`, region `eu-central-1`, status `ACTIVE_HEALTHY`). No Supabase schema changes were made. `airline-exam-bot-staging` was not modified.
+Phase 2 creates the initial database foundation in the verified `smartserve-dev` project (`pvtvhqvvyhumydqsvqtq`, `eu-central-1`). The migrations are the source of truth:
+
+- `20261024065215_phase2_hotel_tenant_schema.sql` creates the hotel and dining model, tenant-safe foreign keys, indexes, RLS, order submission function, and synthetic demo records for two hotels.
+- `20261024065428_phase2_privilege_and_trigger_correction.sql` removes direct order writes and restricts the order function to authenticated users.
+- `20261024070512_phase2_immutable_tenant_ownership.sql` limits update grants so authenticated clients cannot change tenant ownership or stable row identifiers, even when a user belongs to multiple hotels.
+
+The schema includes hotels and memberships; bilingual categories and dishes; modifier groups/options and dietary tags; tables and dining sessions; private guest credential hashes; orders and immutable price/name snapshots; waiter requests; payment records; feedback; and audit events. Money uses integer minor units. Composite foreign keys keep related records in the same hotel. Historical records are retained with restrictive deletes and menu archival fields.
+
+RLS is enabled on all 17 application tables. Hotel membership is checked by `private.has_hotel_role`, a fixed-search-path security-definer helper that trusts the authenticated JWT user ID, not a client-selected hotel ID. Staff membership records cannot be created or changed through client table grants. Hotel managers can edit hotel configuration and catalog records; orders and order-item snapshots are read-only to clients and are created atomically through `public.submit_order`. Anonymous access is denied, including public menu reads. Guest menu access and private guest-session token exchange must be implemented through a deliberately scoped backend in a later phase. `private.guest_session_credentials` stores only credential hashes and is outside the exposed API schemas.
+
+The development database contains synthetic `smartserve-demo-addis` and `smartserve-demo-bahir-dar` records only. No real user identity or hotel data was added. The order function and future membership policies depend on trusted Supabase Auth identities; Phase 2 did not add sign-in or invitation flows. Do not add broad temporary policies to get around that dependency.
+
+### Apply migrations
+
+After signing the Supabase CLI into an account authorized for SmartServe, link the intended project and apply pending migrations:
+
+```sh
+npx supabase login
+npx supabase link --project-ref pvtvhqvvyhumydqsvqtq
+npx supabase migration list
+npx supabase db push
+```
+
+Check the linked project reference before applying any migration. Do not use `db reset` against a linked/remote project; it is a destructive reset operation. The two migration versions above were applied to `smartserve-dev` and confirmed in its migration history. `airline-exam-bot-staging` was not modified.
+
+### Recreate locally and run database tests
+
+Install and start Docker Desktop, then use the local Supabase stack only:
+
+```sh
+npx supabase start
+npx supabase db reset
+npx supabase test db
+npx supabase stop
+```
+
+`supabase db reset` in this sequence resets the local Supabase database, not `smartserve-dev`. The pgTAP suite in `supabase/tests/database/phase2_tenant_isolation.sql` creates synthetic memberships using deferred Auth foreign keys, supplies controlled JWT claims, verifies RLS and order invariants, and rolls back all test fixtures. Never run RLS tests only as a database owner or service role. The suite was executed through the authorized SmartServe Supabase SQL connection in a transaction and its postconditions passed. A local clean-database replay was not verified because Docker Desktop's engine was unavailable during this run.
+
+Phase 2 does not expose a public menu, create Auth users, configure storage buckets, integrate payments, or change Cloudflare. The current frontend and health endpoint do not depend on Supabase.

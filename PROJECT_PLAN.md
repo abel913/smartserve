@@ -1,7 +1,7 @@
 # SmartServe project plan
 
 1. **Project foundation and connected accounts** — Monorepo, frontend, API, shared types, local tooling, and verified service access.
-2. **Database structure and hotel isolation** — Model hotels and dining data with tenant isolation and row-level security.
+2. **Database structure and hotel isolation** — In progress: the schema and tenant policies are applied to `smartserve-dev`; local clean-database replay remains unverified because Docker is unavailable. See `PROGRESS.md`.
 3. **Authentication and staff permissions** — Supabase Auth flows, staff membership, roles, and authorization.
 4. **Hotel setup and menu administration** — Hotel profiles, locations, menu categories, items, availability, and media.
 5. **Guest menu and dining sessions** — Guest-facing menus, table/session entry, dietary details, and language selection.

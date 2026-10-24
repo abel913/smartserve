@@ -46,3 +46,42 @@ Status: **Complete — frontend and API are deployed and verified**
 - No Pages environment variables or secrets are configured. `wrangler secret list` returned no Worker secrets. The welcome page does not call the API, so no production API URL or CORS dependency is currently configured in the frontend.
 - Both production URLs passed their HTTP checks. No paid service or billing setting was enabled or changed.
 - `smartserve-dev` remains accessible and active; no schema changes were made. `airline-exam-bot-staging` was not modified.
+
+## Phase 2 — Database structure and hotel isolation
+
+Status: **In progress — remote schema and transactional security checks pass; local clean-database replay is still unverified**
+
+### Tasks and verified results
+
+- [x] Re-inspect Git status, repository structure, Supabase configuration, and Phase 1 documentation; the worktree was clean at start.
+- [x] Verify the target Supabase project is `smartserve-dev` (`pvtvhqvvyhumydqsvqtq`, `eu-central-1`, `ACTIVE_HEALTHY`) before applying changes. The separate `airline-exam-bot-staging` project was not modified.
+- [x] Confirm the pre-Phase-2 public application schema contained no app tables or migration history. Existing Supabase-managed schemas and data were left intact.
+- [x] Add the hotel and dining schema, tenant-scoped composite foreign keys, indexes, updated-at/currency triggers, membership helper, RLS policies, and atomic `submit_order` function. Add synthetic demonstration data for two hotels only.
+- [x] Record remote migrations `20261024065215` (`phase2_hotel_tenant_schema`), `20261024065428` (`phase2_privilege_and_trigger_correction`), and `20261024070512` (`phase2_immutable_tenant_ownership`) in Supabase history and align the checked-in migration filenames to those IDs.
+- [x] Verify the remote schema contains 17 public application tables, all with RLS enabled; 38 public policies, 34 foreign keys, 58 indexes, and 13 public triggers.
+- [x] Verify direct order/order-item writes are not granted to authenticated clients; `submit_order` is executable by authenticated users only, and neither `anon` nor `service_role` can execute it. No anonymous table grants exist for hotels.
+- [x] Restrict update grants to mutable columns so hotel IDs and stable row identifiers cannot be changed through authenticated table APIs, even by an owner with memberships in multiple hotels.
+- [x] Run controlled-JWT remote RLS checks for two identities: a multi-hotel owner sees only their memberships, and a second hotel manager sees only their own hotel. Cross-hotel SELECT, INSERT, UPDATE, and DELETE were denied; a multi-hotel owner also cannot change a catalog row's tenant. An allowed same-hotel catalog update still succeeds. Test identities and memberships were transaction-scoped and rolled back; no Auth users were created.
+- [x] Verify order pricing snapshots, selected modifier pricing, idempotent retry, mismatched idempotency rejection, closed-session rejection, unavailable item rejection, and atomic rollback after an invalid later line using a controlled JWT. The database transaction rolled back all test orders.
+- [x] Verify the same-hotel category foreign key, unique table number, positive payment amount, duplicate payment reference protection, and hotel-derived session currency. Test rows were rolled back.
+- [x] Add `supabase/tests/database/phase2_tenant_isolation.sql` with 30 pgTAP checks and controlled JWT claims. Running the SQL test file through the SmartServe connection reached assertion 30; direct postcondition checks also passed.
+- [x] Update README and Supabase instructions with the model, tenant security, migration workflow, test workflow, and Auth/guest-flow dependencies.
+- [ ] Recreate the database from migrations and run the standard `supabase test db` CLI in a clean local stack. Docker is installed but its engine is not running (`dockerDesktopLinuxEngine` pipe unavailable). The Supabase CLI session also lists only `airline-exam-bot-staging`; it was not linked to either remote project. Do not link or reset the unrelated project.
+
+### Acceptance checks
+
+- [x] Phase 2 migrations applied to the verified `smartserve-dev` target and confirmed in remote migration history.
+- [x] Foreign keys, unique/check constraints, indexes, RLS enablement, and function grants verified in the remote database.
+- [x] Cross-hotel tenant isolation verified under two controlled, non-privileged authenticated JWT identities, not as table owner/service role.
+- [x] Order creation uses database prices and snapshots, rejects closed/unavailable items and bad quantities, safely handles duplicate requests, and rolls back when any line fails.
+- [ ] Clean local database replay and `supabase test db` CLI result. Blocked only by the unavailable local Docker engine; the remote transaction-scoped tests passed.
+- [x] Existing frontend/API source was not changed; lint, format check, TypeScript type checks, and production builds passed.
+- [x] No secrets, persistent test identities, or changes to another Supabase project were introduced.
+
+### Phase 2 notes
+
+- RLS covers 17 public tables. The `private` schema is not exposed by the Supabase API and stores guest credential hashes only. No actual guests or staff have access until later phases add secure session entry and Auth/membership lifecycle flows.
+- The pgTAP extension was created only inside a rolled-back test transaction; the database was not left with an extra extension or test membership.
+- Migrations were executed through the authorized Supabase connection. The `npx supabase db push`/local replay workflow has not yet been verified from this machine.
+- `npm run lint`, `npm run format:check`, `npm run typecheck`, and `npm run build` passed. The first sandboxed Vite build attempt hit a child-process `spawn EPERM`; rerunning the unchanged build with the approved elevated command completed both the Vite build and Wrangler Worker dry run successfully.
+- The first tenant-ownership review found a multi-hotel user could otherwise move a row by changing both its tenant and related foreign key. The third migration now removes authenticated update privileges from ownership columns; a follow-up controlled-JWT test covers this case.
