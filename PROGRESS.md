@@ -66,7 +66,9 @@ Status: **In progress — remote schema and transactional security checks pass; 
 - [x] Verify the same-hotel category foreign key, unique table number, positive payment amount, duplicate payment reference protection, and hotel-derived session currency. Test rows were rolled back.
 - [x] Add `supabase/tests/database/phase2_tenant_isolation.sql` with 30 pgTAP checks and controlled JWT claims. Running the SQL test file through the SmartServe connection reached assertion 30; direct postcondition checks also passed.
 - [x] Update README and Supabase instructions with the model, tenant security, migration workflow, test workflow, and Auth/guest-flow dependencies.
-- [ ] Recreate the database from migrations and run the standard `supabase test db` CLI in a clean local stack. Docker is installed but its engine is not running (`dockerDesktopLinuxEngine` pipe unavailable). This local workflow does not require linking the CLI to a remote project; the CLI's current remote account view lists only the unrelated airline project, so no remote CLI command was used.
+- [ ] Recreate the database from migrations and run the standard `supabase test db` CLI in a clean local stack. Re-verified on 2026-11-04: Docker is installed (client v29.8.0) but its engine daemon is not running (`dockerDesktopLinuxEngine` pipe unavailable). Running `npx supabase start` halted with `DockerLifecycleInspectError`. The Supabase CLI account lists the unrelated airline project; strict isolation was maintained and no remote commands were executed against it.
+- [x] Re-verify application quality checks on 2026-11-04: `npm run lint`, `npm run format:check`, `npm run typecheck`, and `npm run build` all completed with exit code 0.
+- [x] Establish `PHASE_STATUS.md` to track Phase 2 completion criteria, verified items, and Docker resolution steps.
 
 ### Acceptance checks
 
